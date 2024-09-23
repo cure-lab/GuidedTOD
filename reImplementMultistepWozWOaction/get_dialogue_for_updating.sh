@@ -1,0 +1,24 @@
+export CUDA_VISIBLE_DEVICES=6
+python get_dialogue_for_updating.py --experiment_name abcdASTWOAction10P \
+ --model_name_or_path t5-small \
+  --do_train \
+  --do_predict \
+  --train_file ./data/processed/train_AST_abcd_10p.json \
+  --validation_file ./data/processed/dev_AST_abcd_10p.json \
+  --test_file tmp.json \
+  --text_column input \
+  --summary_column target \
+  --per_device_train_batch_size 1 \
+  --per_device_eval_batch_size 1 \
+  --predict_with_generate \
+  --output_dir ./results/ \
+  --save_strategy epoch \
+  --source_prefix "Predict AST: " \
+  --max_source_length 1024 \
+  --max_target_length 256 \
+  --val_max_target_length 256 \
+  --learning_rate 5e-5 \
+  --warmup_steps 500 \
+  --use_fast_tokenizer False \
+  --no_metrics \
+  --resume_from_checkpoint results/abcdASTWOAction10P_input_target_t5-small/checkpoint-4600

@@ -1,0 +1,109 @@
+def call_LLM(dialogue, Action):
+    action_description = {
+        "pull-up-account": "account has been pulled up for <name>.",
+        "enter-details": "details of <username> have been entered.",
+        "verify-identity": "identity verification in progress ...",
+        "make-password": "a password has been generated.",
+        "search-timing": "system action: search timing, I need to ask a certain question about timing.",
+        "search-policy": "system action: search policy, what kind of policy does the customer want to know?",
+        "validate-purchase": "purchase validation in progress ...",
+        "search-faq": "Answers can be found in the faq pages, searching the faq pages ...",
+        "membership": "membership level of <level> has been noted.",
+        "search-boots": "system action: search boots, click the boots toggle switch",
+        "try-again": "agent is looking for solutions ...",
+        "ask-the-oracle": "querying the system for an answer ...",
+        "update-order": "order has been updated with <change>.",
+        "promo-code": "a promo code has been created.",
+        "update-account": "account has been updated with <change>.",
+        "search-membership": "system action: search membership, I need to know the membership level of the customer.",
+        "make-purchase": "a purchase of <item> was made.",
+        "offer-refund": "a refund has been made for the amount of $<amount>.",
+        "notify-team": "the website team has been notified.",
+        "record-reason": "a reason of <reason> has been recorded.",
+        "search-jeans": "system action: search jeans, click the jeans toggle switch",
+        "shipping-status": "shipping status of <status> has been noted.",
+        "search-shirt": "system action: search shirt, click the shirt toggle switch",
+        "instructions": "agent is looking for solutions ..., I will give you some instructions.",
+        "search-jacket": "system action: search jacket, click the jecket toggle switch",
+        "log-out-in": "agent is looking for solutions ..., instruct the customer to log out of their account and log back in.",
+        "select-faq": "faq answer related to <faq> was selected.",
+        "subscription-status": "querying the system for subscription status ...",
+        "send-link": "a link will be sent.",
+        "search-pricing": "system action: search pricing, price of something."
+    }
+    abcd_hint_prompt = """
+    The following are conversations between a user and an assistant. Indicated by the dialog acts, the assistant can help the user with checking in or providing information of temperature, time, price, location, and so on.
+    The response should be coherent, engaging, diverse, informative, and overall good and should be in line with the next action.
+    The response should be concise and to the point and not exceed 30 words. If there is a slot value, such as <item>, <username>, it should be filled in with the correct value.
+
+    Available Dialog acts:
+    - pull-up-account: account has been pulled up for <name>.
+    - enter-details: details of <username> have been entered.
+    - verify-identity: identity verification in progress ...
+    - make-password: a password has been generated.
+    - search-timing: system action: search timing, I need to ask a certain question about timing.
+    - search-policy: system action: search policy, what kind of policy does the customer want to know?
+    - validate-purchase: purchase validation in progress ...
+    - search-faq: Answers can be found in the faq pages, searching the faq pages ...
+    - membership: membership level of <level> has been noted.
+    - search-boots: system action: search boots, click the boots toggle switch
+    - try-again: agent is looking for solutions ...
+    - ask-the-oracle: querying the system for an answer ...
+    - update-order: order has been updated with <change>.
+    - promo-code: a promo code has been created.
+    - update-account: account has been updated with <change>.
+    - search-membership: system action: search membership, I need to know the membership level of the customer.
+    - make-purchase: a purchase of <item> was made.
+    - offer-refund: a refund has been made for the amount of $<amount>.
+    - notify-team: the website team has been notified.
+    - record-reason: a reason of <reason> has been recorded.
+    - search-jeans: system action: search jeans, click the jeans toggle switch
+    - shipping-status: shipping status of <status> has been noted.
+    - search-shirt: system action: search shirt, click the shirt toggle switch
+    - instructions: agent is looking for solutions ..., I will give you some instructions.
+    - search-jacket: system action: search jacket, click the jecket toggle switch
+    - log-out-in: agent is looking for solutions ..., instruct the customer to log out of their account and log back in.
+    - select-faq: faq answer related to <faq> was selected.
+    - subscription-status: querying the system for subscription status ...
+    - send-link: a link will be sent.
+    - search-pricing: system action: search pricing, price of something.
+
+    Conversation: 
+    Context: hello, how may i help you? i want to know the state of my refund. let me help you with that. i have an existing refund of $100 + i want to refund another $<amount>. did you want to add an extra item to your current refund? yes. could i have your full name or account id? albert sanders. account id 123445.
+    Assistant(pull-up-account [albert sanders]): account has been pulled up for albert sanders.
+
+    Conversation:
+    Context: Context: hello, how may i help you? i want to know the state of my refund. let me help you with that. i have an existing refund of $100 + i want to refund another $<amount>. did you want to add an extra item to your current refund? yes. could i have your full name or account id? albert sanders. account id 123445. thanks. could i have your username, email address and order id to validate your order? <username>. <email>. and the order id? <order_id>. thank you. what is the  item that you want to return? jeans. <name>. 
+    Assistant(record-reason [guess jeans]): a reason of guess jeans has been recorded.
+
+    Conversation:
+    Context: hi. i want to manage my shipping details as my situation has changed. welcome to acmebrands! how may i help you today? i see. what is your name please? i want to change my shipping address. rodriguez domingo. and what is the shipping status please? order received. thanks.
+    Assistant(shipping-status [order received]): shipping status of order received has been noted.
+
+    Conversation:
+    Context: i would like to know more about a product. hello. how may i help you today? sure. i would like to know if the buttons are brown or black. i see. so you are looking to purchase buttons? is there a drop down menu to select the color buttons you want to buy? no im looking to buy a shirt and asking if the button on the shirt is brown or black. product: shirt  brand: michael_kors  amount: $<amount>. oh the buttons on a shirt? should have mentioned that at the beginning.  let me take a look for you. that shirt has dark brown buttons on them. 
+    Assistant(select-faq [shirt_other_3]): faq answer related to shirt_other_3 was selected.
+
+    Conversation: 
+    [[DIALOG]]
+    """
+    abcd_hint_prompt = abcd_hint_prompt.strip()
+
+    prompt = abcd_hint_prompt.replace("[[DIALOG]]", dialogue)
+
+    messages = []
+    messages.append({"role": "system", "content": "You are a helpful assistant. You can generate a response to the user's input based on the given previous dialogue and the next action."})
+    messages.append({"role": "user", "content": prompt})
+
+    response = clientGPT3_5.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        temperature=0.7,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+    # print(response.choices[0].message.content)
+
+    return response.choices[0].message.content

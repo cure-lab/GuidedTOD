@@ -1,0 +1,85 @@
+def call_LLM_woaction_multiwoz(dialogue, Action=None, gpt_model="gpt-3.5-turbo"):
+    action_description = {
+        "find_hotel": "customers are looking for hotels with specific requirements",
+        "book_hotel": "customers are going to booking hotels",
+        "find_train": "customers are looking for trains with specific requirements",
+        "book_train": "customers are going to booking train tickets",
+        "find_attraction": "customers are looking for attractions with specific requirements",
+        "find_restaurant": "customers are looking for restaurants with specific requirements",
+        "book_restaurant": "customers are going to booking tables at restaurants",
+        "find_hospital": "customers are looking for hospitals with specific requirements",
+        "book_taxi": "customers are going to booking taxis",
+        "find_taxi": "customers are looking for taxis with specific requirements",
+        "find_bus": "customers are looking for buses with specific requirements",
+        "find_police": "customers are looking for police stations"
+    }
+
+    abcd_hint_prompt = """
+    The following are conversations between a user and an assistant. Indicated by the dialog acts, the assistant can help the user with checking in or providing information of temperature, time, price, location, and so on.
+    You should predict the next action the assistant should take based on the context of the conversation.
+    The action should be taken from the list of dialog acts provided below.
+    Also, you need to fill in the slot value along with the action, if any, if no slot value is required, you should make the slot value be none. The format is action name [none].
+
+    Available Dialog acts:
+    - search for hotel: customers are looking for hotels with specific requirements
+    - book hotel: customers are going to booking hotels
+    - search for trains: customers are looking for trains with specific requirements
+    - book train ticket: customers are going to booking train tickets
+    - search for attractions: customers are looking for attractions with specific requirements
+    - search for restaurants: customers are looking for restaurants with specific requirements
+    - book table at restaurant: customers are going to booking tables at restaurants
+    - search for hospital: customers are looking for hospitals with specific requirements
+    - book taxi: customers are going to booking taxis
+    - search for taxi: customers are looking for taxis with specific requirements
+    - search for bus: customers are looking for buses with specific requirements
+    - search for police station: customers are looking for police stations
+
+    Conversation: 
+    Context: i need a list of cheap place -s to stay that include free parking . alexander bed and breakfast is in the cheap price range in the centre of town . okay , does that place include free wifi and it is 4 stars ? yes , the alexander has free wifi and is a 4 star hotel . how many nights will you be staying ? i will be staying 5 nights starting from saturday .
+    Assistant: search for hotel [with parking, cheap, with internet, alexander bed and breakfast, 4 stars]
+
+    Conversation:
+    Context: can you let me know if a place called the gonville hotel is still around ? yes and it is as popular as ever . it is 3 stars and quite expensive . would you like me to book a room for you ? what area of town is it in ? it s in town centre . ok , thanks . also , are there any indian restaurant -s in the centre ?
+    Assistant: search for restaurants [centre, indian]
+
+    Conversation:
+    Context: i am looking for a train leaving on saturday from kings lynn . do you have any time preferences ? i need to leave after 13:00 . what will your destination be ? i am wanting to go to cambridge . the tr1499 leaves at 17:11 . can i book some tickets for you ? yes book for 4 people you are reference number is biazmbuc . is there anything else i can help you with ? i am looking for an expensive restaurant in the centre city . i have several restaurant -s in the centre in the expensive range . what type of cuisine would your prefer ? no preference . can you recommend 1 & book a table for 4 people at 17:45 on saturday . & may i have the reference # please ? i would recommend british cuisine . would that be okay with you ? that would be fine . is it available saturday at 17:45 ? the restaurant fitzbillies is available , and i have made you a reservation . your reference number is 4wgdgosa . thank you for your help , have a nice day .
+    Assistant: book table at restaurant [saturday, 4 people, 17:45]
+
+    Conversation:
+    Context: hi , i am looking to visit the colleges in town , and need to know the names of some of them . there are 18 matches . do you have an area in mind ? are there any in the centre ? there are 13 in the centre , including christ s college and emmanuel college . the area actually does not really matter , i just need the address of 1 of your recommendations , please ? sure ! the address for christ s college is saint andrew s street , postcode cb23bu . thank you ! i am also looking for a hotel with 4 stars . the university arms hotel is 4 starts and in the centre where the college is , would you like me to book you or provide more information ? do they have internet and could i have the phone number please ? yes they have internet and phone 01223351241 i need to book a taxi also . it should leave the hotel by 11:30
+    Assistant: search for taxi [university arms hotel, christ s college, 11:30]
+
+    Conversation: 
+    Context: i am looking for a train that will depart from birmingham new street and go to cambridge . can you help me ? there are 133 trains from birmingham new street and to cambridge . is there a particular day and and or time you are interested in ? yes , i want to leave on monday and i need to arrive by 11:15 train tr5747 departs at 7:40 and would arrive in cambridge at 10:23 . would that work for you ? yes , that would be perfect , thanks . here is your reference number: qqvpn13m . total fee will be 75.09 gbp payable at the station . is there anything else i can help you with today ? can you help me find a place to stay ? i am looking a 0 star hotel with a cheap price . i found 2 zero star guest houses that are cheap . 1 is in the north and 1 in the centre . which area would you prefer ? are you able to find me a hotel in the east with free parking ? there are 3 cheap guest houses in east with free parking . they are all 4 stars . would you like me to book 1 of those ? no , i would like that zero star cheap guest house in the north . sure , i can help you with that . when would you like to stay ? monday . please give me their phone number , postcode and address
+    Assistant: book train ticket [none]
+
+    Conversation:
+    Context: hi , i am looking for the nearest police station . hi , the nearest police station is at parkside , cambridge postcode: cb11jg . is there anything else i can help with ? can you please give me the phone number as well ?
+    Assistant: search for police station [none]
+
+    Conversation: 
+    [[DIALOG]]
+    """
+    abcd_hint_prompt = abcd_hint_prompt.strip()
+
+    prompt = abcd_hint_prompt.replace("[[DIALOG]]", dialogue)
+
+    messages = []
+    messages.append({"role": "system", "content": "You are a helpful assistant. You can predict the next action given the preivous utterance context."})
+    messages.append({"role": "user", "content": prompt})
+
+    response = clientGPT4.chat.completions.create(
+        # model="gpt-4"
+        model=gpt_model,
+        # model="gpt-4-turbo",
+        messages=messages,
+        temperature=0.3,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+    # print(response.choices[0].message.content)
+
+    return response.choices[0].message.content

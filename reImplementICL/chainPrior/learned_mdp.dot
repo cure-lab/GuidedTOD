@@ -1,0 +1,21 @@
+digraph learned_mdp {
+s0 [label="init"];
+s1 [label="pull-up-account"];
+s2 [label="enter-details"];
+s3 [label="end"];
+s0 -> s1  [label="pull-up-account:1.0"];
+s0 -> s2  [label="enter-details:1.0"];
+s0 -> s3  [label="end:1.0"];
+s1 -> s1  [label="pull-up-account:0.8014354066985646"];
+s1 -> s2  [label="pull-up-account:0.19856459330143542"];
+s1 -> s2  [label="enter-details:1.0"];
+s1 -> s3  [label="end:1.0"];
+s2 -> s1  [label="pull-up-account:1.0"];
+s2 -> s2  [label="enter-details:1.0"];
+s2 -> s3  [label="end:1.0"];
+s3 -> s1  [label="pull-up-account:1.0"];
+s3 -> s2  [label="enter-details:1.0"];
+s3 -> s3  [label="end:1.0"];
+__start0 [label="", shape=none];
+__start0 -> s0  [label=""];
+}
