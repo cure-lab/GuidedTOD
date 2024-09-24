@@ -1196,6 +1196,328 @@ def compute_ast_acc_metrics_noBeam(predictions, labels, convo_ids, turn_ids, seq
         "CE_value": round(final_score_value, 4)
     }
 
+
+def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids, turn_ids, sequence_scores=None):
+    # print("predictions: ", predictions)
+    # print("labels: ", labels)
+
+    """Adapted from ABCD. """
+    # print("predictions:", predictions)
+    # print("labels:", labels)
+    action_preds = []
+    action_labels = []
+
+    value_preds = []
+    value_labels = []
+    
+    # print("len(new_new_predictions): ", len(new_new_predictions))
+    # print("len(labels): ", len(labels))
+    # for pred, label in zip(new_new_predictions, labels):
+    for pred, label in zip(predictions, labels):
+        pred = pred.split(";")[0]
+        label = label.split(";")[0]
+        # print(f"pred: {pred}, label: {label}")
+        action_label, values_label = parse_ast_prediction(label)
+        values_label.sort()
+        # for value in values_label:
+        #     action_labels.append(action_label)
+        #     value_labels.append(value)
+        action_labels.append(action_label)
+        value_labels.append(values_label)
+
+        action_pred, values_pred = parse_ast_prediction(pred)
+        values_pred.sort()
+
+        if len(values_pred) > len(values_label):
+            values_pred = [v for v in values_label if v in values_pred]
+        if len(values_pred) < len(values_label):
+            values_pred.extend(["MISSING"] * (len(values_label) - len(values_pred)))
+
+        action_preds.append(action_pred)
+        value_preds.append(values_pred)
+
+    action_labels_arrary = np.array(action_labels, dtype=object)
+    action_preds_arrary = np.array(action_preds, dtype=object)
+    action_match = action_labels_arrary == action_preds_arrary
+    action_acc = sum(action_match) / float(len(action_labels))
+
+    value_labels_arrary = np.array(value_labels, dtype=object)
+    value_preds_arrary = np.array(value_preds, dtype=object)
+    value_match = value_labels_arrary == value_preds_arrary
+    value_acc = sum(value_match) / float(len(action_labels))
+
+    joint_match = action_match & value_match
+    joint_acc = sum(joint_match) / float(len(action_labels))
+
+    print(f"action_acc: {action_acc}, value_acc: {value_acc}, joint_acc: {joint_acc}")
+
+    # group by convo_ids
+    unique_convo_ids = list(set(convo_ids))
+    # print(f"unique_convo_ids: {unique_convo_ids}, length: {len(unique_convo_ids)}")
+    conversations = {}
+    # print("len action match: ", len(action_match))
+    for uci in unique_convo_ids:
+        turns, correctness = [], []
+        correctness_action, correctness_value = [], []
+        row_id = 0
+        for convo_id, turn_count in zip(convo_ids, turn_ids):
+            if convo_id == uci:
+                turns.append(turn_count)
+                correct = False
+                correct_action = False
+                correct_value = False
+                action_right = action_match[row_id]
+                value_right = value_match[row_id]
+                # print(f"action_right: {action_right}, value_right: {value_right}")
+                
+                if action_right:
+                    correct_action = True
+                else:
+                    correct_action = False
+                
+                if value_right:
+                    correct_value = True
+                else:
+                    correct_value = False
+
+                if action_right and value_right:
+                    correct = True
+                else:
+                    correct = False
+
+                correctness.append(correct)
+                correctness_action.append(correct_action)
+                correctness_value.append(correct_value)
+            row_id += 1
+
+        # sort by turn_counts
+        # print(f"turns: {turns}, correctness: {correctness}")
+        ordered = [cor for _, cor in sorted(zip(turns, correctness), key=lambda tc: tc[0])]
+        ordered_action = [cor for _, cor in sorted(zip(turns, correctness_action), key=lambda tc: tc[0])]
+        ordered_value = [cor for _, cor in sorted(zip(turns, correctness_value), key=lambda tc: tc[0])]
+        # print(f"ordered: {ordered}, ordered_action: {ordered_action}, ordered_value: {ordered_value}")
+        conversations[uci] = [ordered, ordered_action, ordered_value]
+
+    # count how many correct
+    turn_score, turn_correct = 0, 0
+    turn_score_action, turn_correct_action = 0, 0
+    turn_score_value, turn_correct_value = 0, 0
+    em_joint, em_action, em_value = [], [], []
+    my_scores = []
+    dialogue_step_successes = []
+    for convo_id, itm in conversations.items():
+        # print(f"convo_id: {convo_id}")
+        convo_correctness = itm[0]
+        convo_correctness_action = itm[1]
+        convo_correctness_value = itm[2]
+
+        tmp_counter = 0
+        for step_idx in range(len(convo_correctness)):
+            if convo_correctness[step_idx]:
+                tmp_counter += 1
+        dialogue_step_successes.append(tmp_counter/len(convo_correctness))
+
+        # calculate EM
+        if sum(convo_correctness) == len(convo_correctness):
+            em_joint.append(True)
+        else:
+            em_joint.append(False)
+        if sum(convo_correctness_action) == len(convo_correctness_action):
+            em_action.append(True)
+        else:
+            em_action.append(False)
+        if sum(convo_correctness_value) == len(convo_correctness_value):
+            em_value.append(True)
+        else:
+            em_value.append(False)
+        
+        print(f"convo_id: {convo_id}, convo_correctness: {convo_correctness}")
+        print(f"convo_id: {convo_id}, convo_correctness_action: {convo_correctness_action}")
+        print(f"convo_id: {convo_id}, convo_correctness_value: {convo_correctness_value}")
+
+        # print(f"convo_id: {convo_id}, convo_correctness: {convo_correctness}")
+        current_score = 0
+        convo_length = len(convo_correctness)
+        # we use turn_id rather than the true turn_count since turn counts will skip numbers
+        # when looping through the conversation due to skipping over customer utterances
+
+        snipet_lens = [2]
+
+        # for joint correctness
+        snipet_lens_joint  = snipet_lens
+        snipet_numbers_joint = [0] * len(snipet_lens_joint)
+        snipet_correct_joint = [0] * len(snipet_lens_joint)
+        # for each dialogue, compute the rate of each length of snipet that is correct, using the sliding window of the length
+        for snipet_i in range(len(snipet_lens_joint)):
+            # print("convo_length: ", convo_length)
+            print(f"snipet_lens_joint: {snipet_lens_joint[snipet_i]}, convo_length: {convo_length}")
+            if snipet_lens_joint[snipet_i] > convo_length:
+                continue
+            # print(f"snipet_i: {snipet_i}")
+            snipet_len = snipet_lens_joint[snipet_i]
+            for turn_id in range(convo_length - snipet_len + 1):
+                snipet_numbers_joint[snipet_i] += 1
+                print(f"convo_correctness[turn_id:turn_id+snipet_len]: {convo_correctness[turn_id:turn_id+snipet_len]}")
+                print(f"snipet_len: {snipet_len}")
+                if sum(convo_correctness[turn_id:turn_id+snipet_len]) == snipet_len:
+                    snipet_correct_joint[snipet_i] += 1
+
+        average_counter = 0
+        for snipet_i in range(len(snipet_lens_joint)):
+            # print(f"snipet_correct_joint: {snipet_correct_joint[snipet_i]}, snipet_numbers_joint: {snipet_numbers_joint[snipet_i]}")
+            if snipet_numbers_joint[snipet_i] == 0:
+                continue
+            print(f"snipet_correct_joint[snipet_i]: {snipet_correct_joint[snipet_i]}, snipet_numbers_joint[snipet_i]: {snipet_numbers_joint[snipet_i]}")
+            snipet_correct_joint[snipet_i] = snipet_correct_joint[snipet_i] / snipet_numbers_joint[snipet_i]
+            print(f"snipet_correct_joint[snipet_i]: {snipet_correct_joint[snipet_i]}")
+            average_counter += 1
+        
+        # print(f"snipet_correct: {snipet_correct_joint}")
+        # print("average_counter: ", average_counter)
+        average_for_dialogue = 0
+        for snipet_i in range(len(snipet_lens_joint)):
+            average_for_dialogue += snipet_correct_joint[snipet_i]
+        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        # average_for_dialogue = average_for_dialogue / average_counter
+        # print(f"average_for_dialogue: {average_for_dialogue}")
+
+        turn_score += average_for_dialogue
+
+        # for action correctness
+        snipet_lens_action  = snipet_lens
+        snipet_numbers_action = [0] * len(snipet_lens_action)
+        snipet_correct_action = [0] * len(snipet_lens_action)
+        # for each dialogue, compute the rate of each length of snipet that is correct, using the sliding window of the length
+        for snipet_i in range(len(snipet_lens_action)):
+            # print("convo_length: ", convo_length)
+            if snipet_lens_action[snipet_i] > convo_length:
+                continue
+            # print(f"snipet_i: {snipet_i}")
+            snipet_len = snipet_lens_action[snipet_i]
+            for turn_id in range(convo_length - snipet_len + 1):
+                snipet_numbers_action[snipet_i] += 1
+                if sum(convo_correctness_action[turn_id:turn_id+snipet_len]) == snipet_len:
+                    snipet_correct_action[snipet_i] += 1
+
+        average_counter = 0
+        for snipet_i in range(len(snipet_lens_action)):
+            if snipet_numbers_action[snipet_i] == 0:
+                continue
+            snipet_correct_action[snipet_i] = snipet_correct_action[snipet_i] / snipet_numbers_action[snipet_i]
+            average_counter += 1
+
+        # print(f"snipet_correct: {snipet_correct_action}")
+        average_for_dialogue = 0
+        for snipet_i in range(len(snipet_lens_action)):
+            average_for_dialogue += snipet_correct_action[snipet_i]
+        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        # average_for_dialogue = average_for_dialogue / average_counter
+        # print(f"average_for_dialogue: {average_for_dialogue}")
+
+        turn_score_action += average_for_dialogue
+
+        # for value correctness
+        snipet_lens_value  = snipet_lens
+        snipet_numbers_value = [0] * len(snipet_lens_value)
+        snipet_correct_value = [0] * len(snipet_lens_value)
+        # for each dialogue, compute the rate of each length of snipet that is correct, using the sliding window of the length
+        for snipet_i in range(len(snipet_lens_value)):
+            # print("convo_length: ", convo_length)
+            if snipet_lens_value[snipet_i] > convo_length:
+                continue
+            # print(f"snipet_i: {snipet_i}")
+            snipet_len = snipet_lens_value[snipet_i]
+            for turn_id in range(convo_length - snipet_len + 1):
+                snipet_numbers_value[snipet_i] += 1
+                if sum(convo_correctness_value[turn_id:turn_id+snipet_len]) == snipet_len:
+                    snipet_correct_value[snipet_i] += 1
+
+        average_counter = 0
+        for snipet_i in range(len(snipet_lens_value)):
+            if snipet_numbers_value[snipet_i] == 0:
+                continue
+            snipet_correct_value[snipet_i] = snipet_correct_value[snipet_i] / snipet_numbers_value[snipet_i]
+            average_counter += 1
+
+        # print(f"snipet_correct: {snipet_correct_value}")
+        average_for_dialogue = 0
+        for snipet_i in range(len(snipet_lens_value)):
+            average_for_dialogue += snipet_correct_value[snipet_i]
+        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        # average_for_dialogue = average_for_dialogue / average_counter
+        # print(f"average_for_dialogue: {average_for_dialogue}")
+
+        turn_score_value += average_for_dialogue
+
+        # for turn_id in range(convo_length):
+        #     num_remaining = convo_length - turn_id
+
+        #     num_correct = 0
+        #     num_correct_action = 0
+        #     num_correct_value = 0
+        #     # count up how many were predicted correctly
+        #     tmp_turn_id = turn_id
+        #     while tmp_turn_id < convo_length and convo_correctness[tmp_turn_id]:
+        #         num_correct += 1
+        #         tmp_turn_id += 1
+            
+        #     tmp_turn_id = turn_id
+        #     while tmp_turn_id < convo_length and convo_correctness_action[tmp_turn_id]:
+        #         num_correct_action += 1
+        #         tmp_turn_id += 1
+
+        #     tmp_turn_id = turn_id
+        #     while tmp_turn_id < convo_length and convo_correctness_value[tmp_turn_id]:
+        #         num_correct_value += 1
+        #         tmp_turn_id += 1
+
+        #     if num_correct > 0:
+        #         turn_correct += 1
+        #     if num_correct_action > 0:
+        #         turn_correct_action += 1
+        #     if num_correct_value > 0:
+        #         turn_correct_value += 1
+        #     # normalize by the number of turns remaining
+        #     turn_score += num_correct / num_remaining
+        #     turn_score_action += num_correct_action / num_remaining
+        #     turn_score_value += num_correct_value / num_remaining
+        #     # current_score += num_correct / num_remaining
+
+    # normalize by total number of turns possible
+    '''
+    len(convo_ids): 200, len(turn_ids): 200
+    '''
+    # print(f"len(convo_ids): {len(convo_ids)}, len(turn_ids): {len(turn_ids)}")
+    # turn_acc = turn_correct / float(len(convo_ids))
+    # turn_acc_action = turn_correct_action / float(len(convo_ids))
+    # turn_acc_value = turn_correct_value / float(len(convo_ids))
+    final_score = turn_score / float(len(conversations))
+    final_score_action = turn_score_action / float(len(conversations))
+    final_score_value = turn_score_value / float(len(conversations))
+    
+    em_action_score = sum(em_action) / float(len(conversations))
+    em_value_score = sum(em_value) / float(len(conversations))
+    em_joint_score = sum(em_joint) / float(len(conversations))
+
+    print(f"len(conversations): {len(conversations)}, len(em_joint): {len(em_joint)}, len(em_action): {len(em_action)}, len(em_value): {len(em_value)}")
+
+    step_success_rate = sum(dialogue_step_successes) / len(dialogue_step_successes)
+
+    return {
+        "EM_action": round(em_action_score, 4),
+        "EM_value": round(em_value_score, 4),
+        "EM_joint": round(em_joint_score, 4),
+        # "turn_acc_joint": round(turn_acc, 4),
+        # "turn_acc_action": round(turn_acc_action, 4),
+        # "turn_acc_value": round(turn_acc_value, 4),
+        "CE_joint": round(final_score, 4),
+        "CE_action": round(final_score_action, 4),
+        "CE_value": round(final_score_value, 4),
+        "step_success_rate": round(step_success_rate, 4),
+        "dialogue_success_rate": round(em_joint_score, 4)
+    }
+
+
 '''
 modified implementation with convo_ids and turn_ids
 version: 1.2 
@@ -2599,7 +2921,8 @@ def create_compute_metric_fct(tokenizer, data_args, training_args, model_args):
         if len(predictions) == len(labels):
             print("using compute ast acc metrics no beam")
             # return compute_ast_acc_metrics_noBeam(predictions, labels, conv_ids, turn_ids, sequence_scores)
-            return eval_dialogue(predictions, labels, conv_ids, turn_ids, sequence_scores, contexts)
+            # return eval_dialogue(predictions, labels, conv_ids, turn_ids, sequence_scores, contexts)
+            return compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, conv_ids, turn_ids, sequence_scores)
         else:
             # print("using compute ast acc metrics beam")
             # return compute_ast_acc_metrics_beam(predictions, labels, conv_ids, turn_ids, sequence_scores)

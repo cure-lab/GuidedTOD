@@ -3,7 +3,7 @@
 # export CUDA_VISIBLE_DEVICES=0,1
 # echo "multiwozMultiASTWOAction10P100"
 # python train.py --experiment_name multiwozMultiASTWOAction10P100 \
-#  --model_name_or_path results/multiwozMultiASTWOAction10P100-small \
+#  --model_name_or_path results/multiwozMultiASTWOAction10P100_input_target_t5-small \
 #   --do_predict \
 #   --train_file ./data/processed/train_multiAST_multiwoz_woaction_10p.json \
 #   --validation_file ./data/processed/validation_multiAST_multiwoz_woaction_10p.json \
@@ -75,7 +75,8 @@
 #   --warmup_steps 500 \
 #   --use_fast_tokenizer False \
 #   --use_ast_metrics \
-#   --num_beams 4
+#   --num_beams 1
+
 
 export CUDA_VISIBLE_DEVICES=0,1
 echo "multiwozMultiASTWOActionAll100"
@@ -84,7 +85,7 @@ python train.py --experiment_name multiwozMultiASTWOActionAll100 \
   --do_predict \
   --train_file ./data/processed/train_multiAST_multiwoz_woaction_all.json \
   --validation_file ./data/processed/validation_multiAST_multiwoz_woaction_all.json \
-  --test_file ./data/processed/test_multiAST_multiwoz_woaction_all.json \
+  --test_file ./data/processed/test_multiAST_multiwoz_woaction_100.json \
   --text_column input \
   --summary_column target \
   --per_device_train_batch_size 32 \
