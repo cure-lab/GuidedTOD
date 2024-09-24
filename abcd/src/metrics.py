@@ -1837,7 +1837,7 @@ def compute_ast_acc_metrics_flow(predictions, labels, convo_ids, turn_ids, seque
             state_name = state.split(' ')[0]
             state_label = state.split('[label="')[1].split('"];')[0]
             state_mapping[state_name] = state_label
-        
+
         transition_mapping = {}
         for transition in automaton_transitions:
             transition_split = transition.split('->')
@@ -2408,12 +2408,11 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         for pred in new_pred:
             tmp_pred = pred.split(':')
             current_flows.append(tmp_pred[0])
-            # pred = pred.split(':')[1]
             if len(tmp_pred) == 2:
-                pred = tmp_pred[1]
+                action = tmp_pred[1]
             else:
-                pred = tmp_pred[0]
-            actions.append(pred.split(' [')[0].strip())
+                action = tmp_pred[0]
+            actions.append(action.split(' [')[0].strip())
 
         current_flow = most_common(current_flows)
 
