@@ -21,7 +21,7 @@ python train.py --experiment_name abcdMultiASTWOAction10P \
   --warmup_steps 500 \
   --use_fast_tokenizer False \
   --use_ast_metrics \
-  --num_beams 1
+  --num_beams 4
 
 
 export CUDA_VISIBLE_DEVICES=0,1
@@ -47,7 +47,7 @@ python train.py --experiment_name abcdMultiASTWOAction30P \
   --warmup_steps 500 \
   --use_fast_tokenizer False \
   --use_ast_metrics \
-  --num_beams 1
+  --num_beams 4
 
 
 export CUDA_VISIBLE_DEVICES=0,1
@@ -73,9 +73,9 @@ python train.py --experiment_name abcdMultiASTWOActionHalf \
   --warmup_steps 500 \
   --use_fast_tokenizer False \
   --use_ast_metrics \
-  --num_beams 1
+  --num_beams 4
 
-export CUDA_VISIBLE_DEVICES=1,2
+export CUDA_VISIBLE_DEVICES=0,1
 echo "abcdMultiASTWOActionAll"
 python train.py --experiment_name abcdMultiASTWOActionAll \
  --model_name_or_path results/abcdMultiASTWOActionAll_input_target_t5-small \
@@ -98,4 +98,4 @@ python train.py --experiment_name abcdMultiASTWOActionAll \
   --warmup_steps 500 \
   --use_fast_tokenizer False \
   --use_ast_metrics \
-  --num_beams 1
+  --num_beams 4

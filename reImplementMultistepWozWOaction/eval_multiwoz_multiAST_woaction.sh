@@ -23,7 +23,7 @@ python train.py --experiment_name multiwozMultiASTWOAction10P100 \
   --warmup_steps 500 \
   --use_fast_tokenizer False \
   --use_ast_metrics \
-  --num_beams 1
+  --num_beams 4
 
 
 export CUDA_VISIBLE_DEVICES=6,7
@@ -49,7 +49,7 @@ python train.py --experiment_name multiwozMultiASTWOAction30P100 \
   --warmup_steps 500 \
   --use_fast_tokenizer False \
   --use_ast_metrics \
-  --num_beams 1
+  --num_beams 4
 
 
 export CUDA_VISIBLE_DEVICES=6,7
@@ -75,7 +75,7 @@ python train.py --experiment_name multiwozMultiASTWOActionHalf100 \
   --warmup_steps 500 \
   --use_fast_tokenizer False \
   --use_ast_metrics \
-  --num_beams 1
+  --num_beams 4
 
 
 export CUDA_VISIBLE_DEVICES=6,7
@@ -101,4 +101,4 @@ python train.py --experiment_name multiwozMultiASTWOActionAll100 \
   --warmup_steps 500 \
   --use_fast_tokenizer False \
   --use_ast_metrics \
-  --num_beams 1
+  --num_beams 4

@@ -424,13 +424,13 @@ def parse_ast_prediction(prediction_str):
         '''
         added by xiangyu
         '''
-        for i in range(len(slots)):
-            if slots[i].endswith(">") and not slots[i].startswith("<"):
-                # add "<" to the beginning of the slot
-                slots[i] = "<" + slots[i]
-            if slots[i].startswith("<") and not slots[i].endswith(">"):
-                # add ">" to the end of the slot
-                slots[i] = slots[i] + ">"
+        # for i in range(len(slots)):
+        #     if slots[i].endswith(">") and not slots[i].startswith("<"):
+        #         # add "<" to the beginning of the slot
+        #         slots[i] = "<" + slots[i]
+        #     if slots[i].startswith("<") and not slots[i].endswith(">"):
+        #         # add ">" to the end of the slot
+        #         slots[i] = slots[i] + ">"
     else:
         action_name = "MISSING"
         slots = ["MISSING"]
@@ -2612,19 +2612,103 @@ def compute_ast_acc_metrics_beam_wChain(predictions, labels, convo_ids, turn_ids
     }
 
 def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, turn_ids, sequence_scores=None, num_beams=4):
-    # print("predictions: ", predictions)
-    # print("labels: ", labels)
+    print("len(predictions): ", len(predictions))
+    print("len(labels): ", len(labels))
+    print("len(sequence_scores): ", len(sequence_scores))
     from aalpy.utils import load_automaton_from_file
 
     # load an automaton
-    automaton = load_automaton_from_file("./chainPrior/learned_mdp_8000.dot", automaton_type='mdp')
+
+    action_description = {
+        "pull-up-account": "account has been pulled up for <name>.",
+        "enter-details": "details of <username> have been entered.",
+        "verify-identity": "identity verification in progress ...",
+        "make-password": "a password has been generated.",
+        "search-timing": "system action: search timing, I need to ask a certain question about timing.",
+        "search-policy": "system action: search policy, what kind of policy does the customer want to know?",
+        "validate-purchase": "purchase validation in progress ...",
+        "search-faq": "Answers can be found in the faq pages, searching the faq pages ...",
+        "membership": "membership level of <level> has been noted.",
+        "search-boots": "system action: search boots, click the boots toggle switch",
+        "try-again": "agent is looking for solutions ...",
+        "ask-the-oracle": "querying the system for an answer ...",
+        "update-order": "order has been updated with <change>.",
+        "promo-code": "a promo code has been created.",
+        "update-account": "account has been updated with <change>.",
+        "search-membership": "system action: search membership, I need to know the membership level of the customer.",
+        "make-purchase": "a purchase of <item> was made.",
+        "offer-refund": "a refund has been made for the amount of $<amount>.",
+        "notify-team": "the website team has been notified.",
+        "record-reason": "a reason of <reason> has been recorded.",
+        "search-jeans": "system action: search jeans, click the jeans toggle switch",
+        "shipping-status": "shipping status of <status> has been noted.",
+        "search-shirt": "system action: search shirt, click the shirt toggle switch",
+        "instructions": "agent is looking for solutions ..., I will give you some instructions.",
+        "search-jacket": "system action: search jacket, click the jecket toggle switch",
+        "log-out-in": "agent is looking for solutions ..., instruct the customer to log out of their account and log back in.",
+        "select-faq": "faq answer related to <faq> was selected.",
+        "subscription-status": "querying the system for subscription status ...",
+        "send-link": "a link will be sent.",
+        "search-pricing": "system action: search pricing, price of something."
+    }
+
+    action_mapping = {
+        "init": "init",
+        "pull-up-account": "pull up the costumer account",
+        "enter-details": "enter details",
+        "verify-identity": "verify costumer identity",
+        "make-password": "create new password",
+        "search-timing": "search timing",
+        "search-policy": "check policy",
+        "validate-purchase": "validate purchase",
+        "search-faq": "search faq",
+        "membership": "check membership level",
+        "search-boots": "search for boots",
+        "try-again": "ask costumer to try again",
+        "ask-the-oracle": "ask oracle",
+        "update-order": "update order information",
+        "promo-code": "offer promo code",
+        "update-account": "update costumer account",
+        "search-membership": "get memberships information",
+        "make-purchase": "make purchase",
+        "offer-refund": "offer refund",
+        "notify-team": "notify team",
+        "record-reason": "record reason",
+        "search-jeans": "search for jeans",
+        "shipping-status": "get shipping status",
+        "search-shirt": "search for shirt",
+        "instructions": "check instructions",
+        "search-jacket": "search for jacket",
+        "log-out-in": "ask costumer log out log in",
+        "select-faq": "select topic in faq",
+        "subscription-status": "get subscription status",
+        "send-link": "send link to costumer",
+        "search-pricing": "check pricing"
+    }
+    action_mapping_reverse = {v: k for k, v in action_mapping.items()}
+
+    all_flow_name = [
+        "storewide_query",
+        "subscription_inquiry",
+        "single_item_query",
+        "troubleshoot_site",
+        "purchase_dispute",
+        "account_access",
+        "shipping_issue",
+        "order_issue",
+        "product_defect",
+        "manage_account"
+    ]
+
+    # load an automaton
+    automaton_global = load_automaton_from_file("./chainPrior/learned_mdp_8000.dot", automaton_type='mdp')
     # print(automaton)
     # visualize the automaton
     # visualize_automaton(automaton)
-    automaton = str(automaton)
+    automaton_global = str(automaton_global)
     # print(automaton)
 
-    automaton_splits = automaton.split('\n')
+    automaton_splits = automaton_global.split('\n')
     # print(automaton_splits)
     automaton_states = automaton_splits[1:33]
     # ['s0 [label="init"];', 's1 [label="pull-up-account"];']
@@ -2637,12 +2721,7 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         state_label = state.split('[label="')[1].split('"];')[0]
         state_mapping[state_name] = state_label
 
-    '''
-    state_mapping: {'s0': 'init', 's1': 'pull-up-account', 's2': 'enter-details', 's3': 'verify-identity', 's4': 'make-password', 's5': 'search-timing', 's6': 'search-policy', 's7': 'validate-purchase', 's8': 'search-faq', 's9': 'membership', 's10': 'search-boots', 's11': 'try-again', 's12': 'ask-the-oracle', 's13': 'update-order', 's14': 'promo-code', 's15': 'update-account', 's16': 'search-membership', 's17': 'make-purchase', 's18': 'offer-refund', 's19': 'notify-team', 's20': 'record-reason', 's21': 'search-jeans', 's22': 'shipping-status', 's23': 'search-shirt', 's24': 'instructions', 's25': 'search-jacket', 's26': 'log-out-in', 's27': 'select-faq', 's28': 'subscription-status', 's29': 'send-link', 's30': 'search-pricing', 's31': 'end'}
-    '''
-    # print(f"state_mapping: {state_mapping}")
-
-    transition_mapping = {}
+    transition_mapping_global = {}
     for transition in automaton_transitions:
         transition_split = transition.split('->')
         source_state = transition_split[0].strip()
@@ -2650,13 +2729,14 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         transition_label = transition_split[1].split('[label="')[1].split('"];')[0]
         transition_action = transition_label.split(':')[0]
         transition_freq = np.log(float(transition_label.split(':')[1])) if float(transition_label.split(':')[1]) > 0 else -10000
-        transition_mapping[(state_mapping[source_state], state_mapping[target_state])] = (transition_action, transition_freq)
+        transition_mapping_global[(state_mapping[source_state], state_mapping[target_state])] = (transition_action, transition_freq)
 
     # from s0 to s31, if some pair of states are not in the transition_mapping, then the frequency is 0
     for i in range(32):
         for j in range(32):
-            if (state_mapping[f's{i}'], state_mapping[f's{j}']) not in transition_mapping:
-                transition_mapping[(state_mapping[f's{i}'], state_mapping[f's{j}'])] = ('unknown', -10000)
+            if (state_mapping[f's{i}'], state_mapping[f's{j}']) not in transition_mapping_global:
+                transition_mapping_global[(state_mapping[f's{i}'], state_mapping[f's{j}'])] = ('unknown', -10000)
+
 
     # group predictions every 4
     new_predictions = []
@@ -2675,18 +2755,15 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
     current_convo_id = 999999
     new_new_predictions = []
     for new_pred, label1, new_sequence_score, convo_id1, turn_id1 in zip(new_predictions, labels, new_sequence_scores, convo_ids, turn_ids):
-        # print("new_pred:", new_pred)
-        # print("new_sequence_score:", new_sequence_score)
-        # print()
-        # print(f"new_pred[0]: {new_pred[0]}, new_pred[1]: {new_pred[1]}, new_pred[2]: {new_pred[2]}, new_pred[3]: {new_pred[3]}")
-        
         if convo_id1 != current_convo_id:
             previous_actions = ['init']
             current_convo_id = convo_id1
         
         actions = []
         for pred in new_pred:
-            actions.append(pred.split(' ')[0].strip())
+            action_value = pred.split(';')[0].strip()
+            action = action_value.split(' [')[0].strip()
+            actions.append(action)
         
         # action1 = new_pred[0].split(' ')[0].strip()
         # action2 = new_pred[1].split(' ')[0].strip()
@@ -2696,32 +2773,31 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         rates = []
         for i in range(len(actions)):
             try:
-                rate = transition_mapping[(previous_actions[-1], actions[i])][1]
+                rate = transition_mapping_global[(previous_actions[-1], actions[i])][1]
             except:
                 rate = -10000
             rates.append(rate)
 
-        # rates = [rate1, rate2, rate3, rate4]
-        rates = np.array(rates)
-        # print(f"rates: {rates}, new_sequence_score: {new_sequence_score}")
-        # print(f"rates: {rates}")
-        # print(f"new_sequence_score: {new_sequence_score}")
-        # if model_args.chainPrior:
-        # print(type(new_sequence_score), type(rates))
-        # merge_scores = 0.9*np.array(new_sequence_score) + 0.1*np.array(rates)
-        # else:
-        merge_scores = new_sequence_score
-        # merge_scores = rates
-        # print(f"merge_scores: {merge_scores}")
-        max_index = np.argmax(merge_scores)
-        # print(f"max_index: {max_index}")
-        # print(new_pred[max_index])
-        # print(label1)
-        # print()
+        '''
+        the way to merge the two modules for post processng, v1
+        '''
+        exp_new_sequence_score = [np.exp(score) for score in new_sequence_score]
+        exp_rates = [np.exp(rate) for rate in rates]
+        norm_exp_new_sequence_score = exp_new_sequence_score / np.sum(exp_new_sequence_score)
+        norm_exp_rates = exp_rates / np.sum(exp_rates)
+        log_norm_exp_new_sequence_score = [np.log(score) for score in norm_exp_new_sequence_score]
+        log_norm_exp_rates = [np.log(rate) for rate in norm_exp_rates]
 
+        merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
+        # merge_scores = log_norm_exp_new_sequence_score
+        # merge_scores = rates
+
+        max_index = np.argmax(merge_scores)
         new_new_predictions.append(new_pred[max_index])
 
-        previous_actions.append(label1.split(' ')[0].strip())
+        action_value_label = label1.split(';')[0].strip()
+        action_label = action_value_label.split(' [')[0].strip()
+        previous_actions.append(action_label)
 
     """Adapted from ABCD. """
     # print("predictions:", predictions)
@@ -2734,8 +2810,8 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
     
     # print("len(new_new_predictions): ", len(new_new_predictions))
     # print("len(labels): ", len(labels))
-    # for pred, label in zip(new_new_predictions, labels):
-    for pred, label in zip(predictions, labels):
+    for pred, label in zip(new_new_predictions, labels):
+    # for pred, label in zip(predictions, labels):
         pred = pred.split(";")[0]
         label = label.split(";")[0]
         # print(f"pred: {pred}, label: {label}")
@@ -2787,6 +2863,8 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
     joint_match = action_match & value_match
     joint_acc = sum(joint_match) / float(len(action_labels))
 
+    print(f"action_acc: {action_acc}, value_acc: {value_acc}, joint_acc: {joint_acc}")
+
     # group by convo_ids
     unique_convo_ids = list(set(convo_ids))
     # print(f"unique_convo_ids: {unique_convo_ids}")
@@ -2837,11 +2915,18 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
     turn_score_value, turn_correct_value = 0, 0
     em_joint, em_action, em_value = [], [], []
     my_scores = []
+    dialogue_step_successes = []
     for convo_id, itm in conversations.items():
         # print(f"convo_id: {convo_id}")
         convo_correctness = itm[0]
         convo_correctness_action = itm[1]
         convo_correctness_value = itm[2]
+
+        tmp_counter = 0
+        for step_idx in range(len(convo_correctness)):
+            if convo_correctness[step_idx]:
+                tmp_counter += 1
+        dialogue_step_successes.append(tmp_counter/len(convo_correctness))
 
         # calculate EM
         if sum(convo_correctness) == len(convo_correctness):
@@ -2894,8 +2979,8 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_joint)):
             average_for_dialogue += snipet_correct_joint[snipet_i]
-        # average_for_dialogue = average_for_dialogue / len(snipet_lens)
-        average_for_dialogue = average_for_dialogue / average_counter
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
+        # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
         turn_score += average_for_dialogue
@@ -2927,8 +3012,8 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_action)):
             average_for_dialogue += snipet_correct_action[snipet_i]
-        # average_for_dialogue = average_for_dialogue / len(snipet_lens)
-        average_for_dialogue = average_for_dialogue / average_counter
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
+        # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
         turn_score_action += average_for_dialogue
@@ -2960,8 +3045,8 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_value)):
             average_for_dialogue += snipet_correct_value[snipet_i]
-        # average_for_dialogue = average_for_dialogue / len(snipet_lens)
-        average_for_dialogue = average_for_dialogue / average_counter
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
+        # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
         turn_score_value += average_for_dialogue
@@ -2971,16 +3056,18 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
     len(convo_ids): 200, len(turn_ids): 200
     '''
     # print(f"len(convo_ids): {len(convo_ids)}, len(turn_ids): {len(turn_ids)}")
-    # turn_acc = turn_correct / float(len(convo_ids))
-    # turn_acc_action = turn_correct_action / float(len(convo_ids))
-    # turn_acc_value = turn_correct_value / float(len(convo_ids))
+    turn_acc = turn_correct / float(len(conversations))
+    turn_acc_action = turn_correct_action / float(len(conversations))
+    turn_acc_value = turn_correct_value / float(len(conversations))
     final_score = turn_score / float(len(conversations))
     final_score_action = turn_score_action / float(len(conversations))
     final_score_value = turn_score_value / float(len(conversations))
     
-    em_action_score = sum(em_action) / float(len(conversations))
-    em_value_score = sum(em_value) / float(len(conversations))
-    em_joint_score = sum(em_joint) / float(len(conversations))
+    em_action_score = sum(em_action) / float(len(em_action))
+    em_value_score = sum(em_value) / float(len(em_value))
+    em_joint_score = sum(em_joint) / float(len(em_joint))
+
+    step_success_rate = sum(dialogue_step_successes) / len(dialogue_step_successes)
 
     return {
         "EM_action": round(em_action_score, 4),
@@ -2991,7 +3078,9 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         # "turn_acc_value": round(turn_acc_value, 4),
         "CE_joint": round(final_score, 4),
         "CE_action": round(final_score_action, 4),
-        "CE_value": round(final_score_value, 4)
+        "CE_value": round(final_score_value, 4),
+        "step_success_rate": round(step_success_rate, 4),
+        "dialogue_success_rate": round(em_joint_score, 4)
     }
 
 '''
@@ -3461,7 +3550,8 @@ def create_compute_metric_fct(tokenizer, data_args, training_args, model_args):
         '''
         if len(predictions) == 4*len(labels):
             print("using compute ast acc metrics flow")
-            return compute_ast_acc_metrics_flow(predictions, labels, conv_ids, turn_ids, sequence_scores, num_beams)
+            # return compute_ast_acc_metrics_flow(predictions, labels, conv_ids, turn_ids, sequence_scores, num_beams)
+            return compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, conv_ids, turn_ids, sequence_scores, num_beams)
             # return eval_dialogue(predictions, labels, conv_ids, turn_ids, sequence_scores, contexts)
         else:
             # print("using compute ast acc metrics beam")
