@@ -2145,9 +2145,9 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         # print(f"new_sequence_score: {new_sequence_score}")
         # if model_args.chainPrior:
         # print(type(new_sequence_score), type(rates))
-        # merge_scores = 0.9*np.array(new_sequence_score) + 0.1*np.array(rates)
+        merge_scores = 0.9*np.array(new_sequence_score) + 0.1*np.array(rates)
         # else:
-        merge_scores = new_sequence_score
+        # merge_scores = new_sequence_score
         # merge_scores = rates
         # print(f"merge_scores: {merge_scores}")
         max_index = np.argmax(merge_scores)

@@ -2247,8 +2247,8 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         log_norm_exp_new_sequence_score = [np.log(score) for score in norm_exp_new_sequence_score]
         log_norm_exp_rates = [np.log(rate) for rate in norm_exp_rates]
 
-        # merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
-        merge_scores = log_norm_exp_new_sequence_score
+        merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
+        # merge_scores = log_norm_exp_new_sequence_score
         # merge_scores = rates
 
         max_index = np.argmax(merge_scores)

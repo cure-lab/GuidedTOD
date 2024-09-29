@@ -1793,8 +1793,8 @@ def compute_ast_acc_metrics_DSP(predictions, labels, convo_ids, turn_ids, sequen
         # print("log_norm_exp_rates: ", log_norm_exp_rates)
         # print()
 
-        # merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
-        merge_scores = log_norm_exp_new_sequence_score
+        merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
+        # merge_scores = log_norm_exp_new_sequence_score
         # merge_scores = rates
 
         '''
