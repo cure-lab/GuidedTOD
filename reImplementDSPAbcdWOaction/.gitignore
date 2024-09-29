@@ -1,0 +1,14 @@
+# ignores all the files in the results/ directory
+/results/*
+/data/raw/*
+/wandb/*
+Apache-2.0 License.txt
+.lock
+Dockerfile
+Notice.txt
+pyproject.toml
+tmp.json
+/src/__pycache__/*
+/src/data/__pycache__/*
+/src/hf_training/__pycache__/*
+/src/model/__pycache__/*

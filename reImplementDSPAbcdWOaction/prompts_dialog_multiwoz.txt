@@ -1,0 +1,87 @@
+def call_LLM_gpt3_multiwoz(dialogue, Action):
+    abcd_hint_prompt = """
+    The following are conversations between a user and an assistant. Indicated by the dialog acts, the assistant can help the user with checking in or providing information of temperature, time, price, location, and so on.
+    The response should be coherent, engaging, diverse, informative, and overall good and should be in line with the next action.
+    The response should be concise and to the point and not exceed 30 words. If there is a slot, such as <item>, <username>, <location>, it should be filled in with the correct value.
+
+    Available Dialog acts:
+    - search for hotel: customers are looking for <price> hotels with <requirements>, <level>, in <location>, <date> <time>, the hotel should have <requirements>.
+    - book hotel: customers are going to booking hotels for <number> people, <number> nights starting from <date>.
+    - search for trains: customers are looking for trains from <location> to <location> on <date> <time>.
+    - book train ticket: customers are going to booking train tickets for <number> people.
+    - search for attractions: customers are looking for <type> attractions in <location> with <requirements>.
+    - search for restaurants: customers are looking for <type> restaurants in <location>, <price> range, with <requirements>.
+    - book table at restaurant: customers are going to booking tables at restaurants for <number> people, on <date> at <time>.
+    - search for hospital: customers are looking for <type> hospitals in <location>.
+    - book taxi: customers are going to booking taxis
+    - search for taxi: customers are looking for a taxi at <time> from <location> to <location>.
+    - search for bus: customers are looking for a bus from <location> to <location> on <date> <time>.
+    - search for police station: customers are looking for police stations
+
+    Conversation: 
+    Context: i need a list of cheap place -s to stay that include free parking . alexander bed and breakfast is in the cheap price range in the centre of town . okay , does that place include free wifi and it is 4 stars ? yes , the alexander has free wifi and is a 4 star hotel . how many nights will you be staying ? i will be staying 5 nights starting from saturday .
+    Assistant(search for hotel [with parking, cheap, with internet, alexander bed and breakfast, 4 stars]): customers are looking for cheap hotels with free parking and wifi, 4 stars, in the centre of town, for 5 nights starting from saturday
+
+    Conversation:
+    Context: i need a list of cheap place -s to stay that include free parking . alexander bed and breakfast is in the cheap price range in the centre of town . okay , does that place include free wifi and it is 4 stars ? yes , the alexander has free wifi and is a 4 star hotel . how many nights will you be staying ? i will be staying 5 nights starting from saturday . thank you so much for that information . how many people in your party so i can make the booking for you ? yes , can you book it for 6 people ?
+    Assistant(book hotel [saturday, 6 people, 5 stay]): customers are going to booking hotels for 6 people, 5 nights starting from saturday.
+
+    Conversation:
+    Context: i need a list of cheap place -s to stay that include free parking . alexander bed and breakfast is in the cheap price range in the centre of town . okay , does that place include free wifi and it is 4 stars ? yes , the alexander has free wifi and is a 4 star hotel . how many nights will you be staying ? i will be staying 5 nights starting from saturday . thank you so much for that information . how many people in your party so i can make the booking for you ? yes , can you book it for 6 people ? booking was successful . your reference number is qit1w09h . do you need anything else ? thank you . i also need a train to kings lynn that leaves on sunday . there are 19 trains leaving cambridge on sunday . when would you like to depart ? i want the train to leave after 16:30 .
+    Assistant(search for trains [sunday, kings lynn, 16:30]): customers are looking for trains to kings lynn on sunday, leaving after 16:30
+
+    Conversation:
+    Context: what trains arrive in cambridge by 10:30 ? where are you traveling from and on what day ? i am traveling from kings lynn on sunday . please give me your day and time of departure to help me to narrow down to a suitable result . i do not have a departure time . i just need to be in cambridge by 10:30 . i suggest the tr8092 that will arrive in cambridge at 08:58 . this will give you ample time . do you want me to book this ? please book for 5 people , i will also need the reference number .
+    Assistant(book train ticket [5 people]): customers are going to booking train tickets for 5 people.
+    
+    Conversation:
+    Context: hello , i am looking for something to do in the west part of town . it sould involve multiple sports . unfortunately none of those place -s exist here . any other preferences ? hm , can you tell me about what entertainment venue -s might be on the west side of town instead ? there s a fun place called whale of a time at unit 8 , viking way , bar hill . thank you , can i please get an address and postal code . is there an entrance fee that will be charged .
+    Assistant(search for attractions [west, entertainment, whale of a time]): customers are looking for entertainment venues on the west side of town, whale of a time
+
+    Conversation:
+    Context: i am looking for a chinese restaurant please . or 1 that serves chinese food . what area of town would you like the restaurant to be in ? i would like to be in the centre of town . jinling noodle bar is in the centre area serving chinese in the moderate price range . would you like to reserve a table ? i want something expensive .
+    Assistant(search for restaurants [chinese, centre, expensive]): customers are looking for chinese restaurants in the centre of town, expensive
+
+    Conversation:
+    Context: can you let me know if a place called the gonville hotel is still around ? yes and it is as popular as ever . it is 3 stars and quite expensive . would you like me to book a room for you ? what area of town is it in ? it s in town centre . ok , thanks . also , are there any indian restaurant -s in the centre ? there are several with various price range -s . whatever you recommend . give me your best recommendation and go ahead and book me for a table for 6 people . i want to go on saturday at 15:30 . saffron brasserie has your reservation . it will be held for 15 minutes . the reference number is , pryp175n . can i get you the address or phone number ? no , that will be all . thank you !
+    Assistant(book table at restaurant [saturday, 6 people, 15:30]): customers are going to booking tables at restaurants for 6 people, on saturday at 15:30
+
+    Conversation:
+    Context: i need to find a hospital here in the area . the nearest hospital is located at hills rd , cambridge . can i get thhe phone number and postcode which department are you looking for so i can give you the correct phone number ? i need the paediatric clinic please . the phone number for the paediatric clinic is 01223348313 , is there anything else i can help with ? yes , may i please have the post code ?
+    Assistant(search for hospital [paediatric clinic]): customers are looking for the paediatric clinic.
+
+    Conversation:
+    Context: i am looking for a hotel in cambridge called the cambridge belfry that hotel is in the west and listed as cheap , but still has 4 stars . they provide free parking and internet . would you like to make a reservation ? yes , could you please book me a room on tuesday for 5 people and for 4 nights . booking was successful . reference number: mcitlhi8 . great ! i also need information on multiple sports in the centre . there are no multiple sports attractions in the centre . should we try another area ? how about a museum ? how about broughton house gallery ? it s free of charge . that sounds great . can you please give me the phone number ? sure . their phone number is 01223314960 . i would also like a taxi to commute and i would like it 17:45 please and the contact number and the car type , thank you okay , where do you want the taxi to pick you up and where will you be going ? i need the taxi to pick me up at the hotel by 17:45 .
+    Assistant(search for taxi [17:45, cambridge belfry, broughton house gallery]): customers are looking for a taxi at 17:45 from cambridge belfry to broughton house gallery.
+
+    Conversation:
+    Context: can you help me find a train that leaves cambridge after 9:45 pm ? thanks . i can help with that . what is the destination and what day would you like to travel ? i am going to bishops storford on wednesday . i actually need to leave after 21:45 though . i do not have any trains that match your request . that s disappointing . can you recommend a taxi or bus service ?
+    Assistant(search for bus [wednesday, cambridge, bishops stortford, 21:45]): customers are looking for a bus from cambridge to bishops stortford on wednesday, leaving after 21:45.
+
+    Conversation:
+    Context: i am looking for the parkside police station parkside police station is located in parkside , cambridge , within the postcode of cb11jg . may i help with something else ? yes , can you please provide their phone number and physical address ?
+    Assistant(search for police station [none]): customers are looking for police stations.
+
+    Conversation: 
+    [[DIALOG]]
+    """
+    abcd_hint_prompt = abcd_hint_prompt.strip()
+
+    prompt = abcd_hint_prompt.replace("[[DIALOG]]", dialogue)
+
+    messages = []
+    messages.append({"role": "system", "content": "You are a helpful assistant. You can generate a response to the user's input based on the given previous dialogue and the next action."})
+    messages.append({"role": "user", "content": prompt})
+
+    response = clientGPT.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        temperature=0.7,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+    # print(response.choices[0].message.content)
+
+    return response.choices[0].message.content

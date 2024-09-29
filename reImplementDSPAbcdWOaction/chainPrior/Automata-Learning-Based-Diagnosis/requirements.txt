@@ -1,0 +1,4 @@
+aalpy
+# python = 3.10
+# use conda to install graphviz:
+# conda install graphviz
