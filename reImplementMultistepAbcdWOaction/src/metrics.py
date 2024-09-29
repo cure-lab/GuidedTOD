@@ -1923,7 +1923,7 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_joint)):
             average_for_dialogue += snipet_correct_joint[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -1956,7 +1956,7 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_action)):
             average_for_dialogue += snipet_correct_action[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -1989,7 +1989,7 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_value)):
             average_for_dialogue += snipet_correct_value[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 

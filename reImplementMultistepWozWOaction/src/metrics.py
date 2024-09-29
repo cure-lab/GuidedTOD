@@ -427,9 +427,9 @@ def parse_ast_prediction(prediction_str):
                 # add ">" to the end of the slot
                 slots[i] = slots[i] + ">"
     else:
+        print(f"the wrong label: {prediction_str}")
         action_name = "MISSING"
         slots = ["MISSING"]
-
     return action_name, slots
 
 def call_LLM_gpt3_multiwoz(dialogue, Action):
@@ -937,6 +937,12 @@ def compute_ast_acc_metrics_noBeam(predictions, labels, convo_ids, turn_ids, seq
         action_preds.append(action_pred)
         value_preds.append(values_pred)
 
+    missing_count = sum(1 for label in action_labels if label == "MISSING")
+    print(f"Number of 'MISSING' labels in action_labels: {missing_count}")
+
+    missing_count = sum(1 for pred in action_preds if pred == "MISSING")
+    print(f"Number of 'MISSING' pred in action_preds: {missing_count}")
+
     action_labels_arrary = np.array(action_labels, dtype=object)
     action_preds_arrary = np.array(action_preds, dtype=object)
     action_match = action_labels_arrary == action_preds_arrary
@@ -1005,11 +1011,17 @@ def compute_ast_acc_metrics_noBeam(predictions, labels, convo_ids, turn_ids, seq
     turn_score_value, turn_correct_value = 0, 0
     em_joint, em_action, em_value = [], [], []
     my_scores = []
+    counter_length = {}
     for convo_id, itm in conversations.items():
         # print(f"convo_id: {convo_id}")
         convo_correctness = itm[0]
         convo_correctness_action = itm[1]
         convo_correctness_value = itm[2]
+
+        if len(convo_correctness_action) not in counter_length:
+            counter_length[len(convo_correctness_action)] = 1
+        else:
+            counter_length[len(convo_correctness_action)] += 1
 
         # calculate EM
         if sum(convo_correctness) == len(convo_correctness):
@@ -1062,7 +1074,7 @@ def compute_ast_acc_metrics_noBeam(predictions, labels, convo_ids, turn_ids, seq
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_joint)):
             average_for_dialogue += snipet_correct_joint[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -1095,7 +1107,7 @@ def compute_ast_acc_metrics_noBeam(predictions, labels, convo_ids, turn_ids, seq
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_action)):
             average_for_dialogue += snipet_correct_action[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -1128,7 +1140,7 @@ def compute_ast_acc_metrics_noBeam(predictions, labels, convo_ids, turn_ids, seq
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_value)):
             average_for_dialogue += snipet_correct_value[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -1168,6 +1180,7 @@ def compute_ast_acc_metrics_noBeam(predictions, labels, convo_ids, turn_ids, seq
         #     turn_score_value += num_correct_value / num_remaining
         #     # current_score += num_correct / num_remaining
 
+    print(f"the counter of the action length in Multi-woz: {counter_length}")
     # normalize by total number of turns possible
     '''
     len(convo_ids): 200, len(turn_ids): 200
@@ -1195,7 +1208,6 @@ def compute_ast_acc_metrics_noBeam(predictions, labels, convo_ids, turn_ids, seq
         "CE_action": round(final_score_action, 4),
         "CE_value": round(final_score_value, 4)
     }
-
 
 def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids, turn_ids, sequence_scores=None):
     # print("predictions: ", predictions)
@@ -1235,6 +1247,12 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
 
         action_preds.append(action_pred)
         value_preds.append(values_pred)
+
+    missing_count = sum(1 for label in action_labels if label == "MISSING")
+    print(f"Number of 'MISSING' labels in action_labels: {missing_count}")
+
+    missing_count = sum(1 for pred in action_preds if pred == "MISSING")
+    print(f"Number of 'MISSING' pred in action_preds: {missing_count}")
 
     action_labels_arrary = np.array(action_labels, dtype=object)
     action_preds_arrary = np.array(action_preds, dtype=object)
@@ -1304,7 +1322,9 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
     turn_score_value, turn_correct_value = 0, 0
     em_joint, em_action, em_value = [], [], []
     my_scores = []
+    counter_length = {}
     dialogue_step_successes = []
+
     for convo_id, itm in conversations.items():
         # print(f"convo_id: {convo_id}")
         convo_correctness = itm[0]
@@ -1316,6 +1336,11 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
             if convo_correctness[step_idx]:
                 tmp_counter += 1
         dialogue_step_successes.append(tmp_counter/len(convo_correctness))
+
+        if len(convo_correctness_action) not in counter_length:
+            counter_length[len(convo_correctness_action)] = 1
+        else:
+            counter_length[len(convo_correctness_action)] += 1
 
         # calculate EM
         if sum(convo_correctness) == len(convo_correctness):
@@ -1331,17 +1356,13 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         else:
             em_value.append(False)
         
-        print(f"convo_id: {convo_id}, convo_correctness: {convo_correctness}")
-        print(f"convo_id: {convo_id}, convo_correctness_action: {convo_correctness_action}")
-        print(f"convo_id: {convo_id}, convo_correctness_value: {convo_correctness_value}")
-
         # print(f"convo_id: {convo_id}, convo_correctness: {convo_correctness}")
         current_score = 0
         convo_length = len(convo_correctness)
         # we use turn_id rather than the true turn_count since turn counts will skip numbers
         # when looping through the conversation due to skipping over customer utterances
 
-        snipet_lens = [2]
+        snipet_lens = [1,2,3]
 
         # for joint correctness
         snipet_lens_joint  = snipet_lens
@@ -1350,15 +1371,12 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         # for each dialogue, compute the rate of each length of snipet that is correct, using the sliding window of the length
         for snipet_i in range(len(snipet_lens_joint)):
             # print("convo_length: ", convo_length)
-            print(f"snipet_lens_joint: {snipet_lens_joint[snipet_i]}, convo_length: {convo_length}")
             if snipet_lens_joint[snipet_i] > convo_length:
                 continue
             # print(f"snipet_i: {snipet_i}")
             snipet_len = snipet_lens_joint[snipet_i]
             for turn_id in range(convo_length - snipet_len + 1):
                 snipet_numbers_joint[snipet_i] += 1
-                print(f"convo_correctness[turn_id:turn_id+snipet_len]: {convo_correctness[turn_id:turn_id+snipet_len]}")
-                print(f"snipet_len: {snipet_len}")
                 if sum(convo_correctness[turn_id:turn_id+snipet_len]) == snipet_len:
                     snipet_correct_joint[snipet_i] += 1
 
@@ -1367,9 +1385,7 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
             # print(f"snipet_correct_joint: {snipet_correct_joint[snipet_i]}, snipet_numbers_joint: {snipet_numbers_joint[snipet_i]}")
             if snipet_numbers_joint[snipet_i] == 0:
                 continue
-            print(f"snipet_correct_joint[snipet_i]: {snipet_correct_joint[snipet_i]}, snipet_numbers_joint[snipet_i]: {snipet_numbers_joint[snipet_i]}")
             snipet_correct_joint[snipet_i] = snipet_correct_joint[snipet_i] / snipet_numbers_joint[snipet_i]
-            print(f"snipet_correct_joint[snipet_i]: {snipet_correct_joint[snipet_i]}")
             average_counter += 1
         
         # print(f"snipet_correct: {snipet_correct_joint}")
@@ -1377,7 +1393,7 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_joint)):
             average_for_dialogue += snipet_correct_joint[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -1410,7 +1426,7 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_action)):
             average_for_dialogue += snipet_correct_action[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -1443,46 +1459,13 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_value)):
             average_for_dialogue += snipet_correct_value[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
         turn_score_value += average_for_dialogue
 
-        # for turn_id in range(convo_length):
-        #     num_remaining = convo_length - turn_id
-
-        #     num_correct = 0
-        #     num_correct_action = 0
-        #     num_correct_value = 0
-        #     # count up how many were predicted correctly
-        #     tmp_turn_id = turn_id
-        #     while tmp_turn_id < convo_length and convo_correctness[tmp_turn_id]:
-        #         num_correct += 1
-        #         tmp_turn_id += 1
-            
-        #     tmp_turn_id = turn_id
-        #     while tmp_turn_id < convo_length and convo_correctness_action[tmp_turn_id]:
-        #         num_correct_action += 1
-        #         tmp_turn_id += 1
-
-        #     tmp_turn_id = turn_id
-        #     while tmp_turn_id < convo_length and convo_correctness_value[tmp_turn_id]:
-        #         num_correct_value += 1
-        #         tmp_turn_id += 1
-
-        #     if num_correct > 0:
-        #         turn_correct += 1
-        #     if num_correct_action > 0:
-        #         turn_correct_action += 1
-        #     if num_correct_value > 0:
-        #         turn_correct_value += 1
-        #     # normalize by the number of turns remaining
-        #     turn_score += num_correct / num_remaining
-        #     turn_score_action += num_correct_action / num_remaining
-        #     turn_score_value += num_correct_value / num_remaining
-        #     # current_score += num_correct / num_remaining
-
+    print(f"the counter of the action length in Multi-woz: {counter_length}")
     # normalize by total number of turns possible
     '''
     len(convo_ids): 200, len(turn_ids): 200
@@ -1498,8 +1481,6 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
     em_action_score = sum(em_action) / float(len(conversations))
     em_value_score = sum(em_value) / float(len(conversations))
     em_joint_score = sum(em_joint) / float(len(conversations))
-
-    print(f"len(conversations): {len(conversations)}, len(em_joint): {len(em_joint)}, len(em_action): {len(em_action)}, len(em_value): {len(em_value)}")
 
     step_success_rate = sum(dialogue_step_successes) / len(dialogue_step_successes)
 
@@ -2923,6 +2904,8 @@ def create_compute_metric_fct(tokenizer, data_args, training_args, model_args):
             # return compute_ast_acc_metrics_noBeam(predictions, labels, conv_ids, turn_ids, sequence_scores)
             # return eval_dialogue(predictions, labels, conv_ids, turn_ids, sequence_scores, contexts)
             return compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, conv_ids, turn_ids, sequence_scores)
+            # return compute_ast_acc_metrics_beam_wChain(predictions, labels, conv_ids, turn_ids, sequence_scores)
+            # return compute_ast_acc_metrics_noBeam(predictions, labels, conv_ids, turn_ids, sequence_scores)
         else:
             # print("using compute ast acc metrics beam")
             # return compute_ast_acc_metrics_beam(predictions, labels, conv_ids, turn_ids, sequence_scores)

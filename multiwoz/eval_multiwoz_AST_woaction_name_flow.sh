@@ -78,7 +78,7 @@ python train.py --experiment_name multiwozASTWOActionNameFlowHalf \
   --num_beams 4
 
 
-export CUDA_VISIBLE_DEVICES=1,2
+export CUDA_VISIBLE_DEVICES=6,7
 echo "multiwozASTWOActionNameFlowAll"
 python train.py --experiment_name multiwozASTWOActionNameFlowAll \
  --model_name_or_path results/multiwozASTWOActionNameFlowAll_input_target_t5-small \

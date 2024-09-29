@@ -1,5 +1,5 @@
 # set cuda device
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=4,5
 echo "abcdASTWOActionFlowAll"
 python train.py --experiment_name abcdASTWOActionFlowAll \
  --model_name_or_path results/abcdASTWOActionFlowAll_input_target_t5-small \
@@ -25,7 +25,7 @@ python train.py --experiment_name abcdASTWOActionFlowAll \
   --num_beams 4
 
 
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=4,5
 echo "abcdASTWOActionFlowHalf"
 python train.py --experiment_name abcdASTWOActionFlowHalf \
  --model_name_or_path results/abcdASTWOActionFlowHalf_input_target_t5-small \
@@ -51,7 +51,7 @@ python train.py --experiment_name abcdASTWOActionFlowHalf \
   --num_beams 4
 
 
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=4,5
 echo "abcdASTWOActionFlow30P"
 python train.py --experiment_name abcdASTWOActionFlow30P \
  --model_name_or_path results/abcdASTWOActionFlow30P_input_target_t5-small \
@@ -76,7 +76,7 @@ python train.py --experiment_name abcdASTWOActionFlow30P \
   --use_ast_metrics \
   --num_beams 4
 
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=4,5
 echo "abcdASTWOActionFlow10P"
 python train.py --experiment_name abcdASTWOActionFlow10P \
  --model_name_or_path results/abcdASTWOActionFlow10P_input_target_t5-small \

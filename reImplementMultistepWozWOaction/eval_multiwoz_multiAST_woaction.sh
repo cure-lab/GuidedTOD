@@ -85,7 +85,7 @@ python train.py --experiment_name multiwozMultiASTWOActionAll100 \
   --do_predict \
   --train_file ./data/processed/train_multiAST_multiwoz_woaction_all.json \
   --validation_file ./data/processed/validation_multiAST_multiwoz_woaction_all.json \
-  --test_file ./data/processed/test_multiAST_multiwoz_woaction_100.json \
+  --test_file ./data/processed/test_multiAST_multiwoz_woaction_all.json \
   --text_column input \
   --summary_column target \
   --per_device_train_batch_size 32 \

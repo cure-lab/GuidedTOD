@@ -1,5 +1,5 @@
 # set cuda device
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=6,7
 echo "multiwozASTWOActionName10P"
 python train.py --experiment_name multiwozASTWOActionName10P \
  --model_name_or_path results/multiwozASTWOActionName10P_input_target_t5-small \
@@ -26,7 +26,7 @@ python train.py --experiment_name multiwozASTWOActionName10P \
 
 
 
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=6,7
 echo "multiwozASTWOActionName30P"
 python train.py --experiment_name multiwozASTWOActionName30P \
  --model_name_or_path results/multiwozASTWOActionName30P_input_target_t5-small \
@@ -52,7 +52,7 @@ python train.py --experiment_name multiwozASTWOActionName30P \
   --num_beams 4
 
 
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=6,7
 echo "multiwozASTWOActionNameHalf"
 python train.py --experiment_name multiwozASTWOActionNameHalf \
  --model_name_or_path results/multiwozASTWOActionNameHalf_input_target_t5-small \
@@ -78,7 +78,7 @@ python train.py --experiment_name multiwozASTWOActionNameHalf \
   --num_beams 4
 
 
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=6,7
 echo "multiwozASTWOActionNameAll"
 python train.py --experiment_name multiwozASTWOActionNameAll \
  --model_name_or_path results/multiwozASTWOActionNameAll_input_target_t5-small \

@@ -2147,40 +2147,40 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
                 transition_mapping_global[(state_mapping[f's{i}'], state_mapping[f's{j}'])] = ('unknown', -10000)
 
 
-    transition_mapping_flow = {}
-    for i in range(len(all_flow_name)):
-        flow_name = all_flow_name[i]
-        chainedPriorpath = "./chainPrior/refined/learned_mdp_multiwoz_flow_all_" + flow_name + ".dot"
+    # transition_mapping_flow = {}
+    # for i in range(len(all_flow_name)):
+    #     flow_name = all_flow_name[i]
+    #     chainedPriorpath = "./chainPrior/refined/learned_mdp_multiwoz_flow_all_" + flow_name + ".dot"
 
-        automaton = load_automaton_from_file(chainedPriorpath, automaton_type='mdp')
-        automaton = str(automaton)
-        automaton_splits = automaton.split('\n')
-        automaton_states = automaton_splits[1:15]
-        automaton_transitions = automaton_splits[15:-4]
+    #     automaton = load_automaton_from_file(chainedPriorpath, automaton_type='mdp')
+    #     automaton = str(automaton)
+    #     automaton_splits = automaton.split('\n')
+    #     automaton_states = automaton_splits[1:15]
+    #     automaton_transitions = automaton_splits[15:-4]
 
-        state_mapping = {}
-        for state in automaton_states:
-            state_name = state.split(' ')[0]
-            state_label = state.split('[label="')[1].split('"];')[0]
-            state_mapping[state_name] = state_label
+    #     state_mapping = {}
+    #     for state in automaton_states:
+    #         state_name = state.split(' ')[0]
+    #         state_label = state.split('[label="')[1].split('"];')[0]
+    #         state_mapping[state_name] = state_label
 
-        transition_mapping = {}
-        for transition in automaton_transitions:
-            transition_split = transition.split('->')
-            source_state = transition_split[0].strip()
-            target_state = transition_split[1].strip().split(' ')[0]
-            transition_label = transition_split[1].split('[label="')[1].split('"];')[0]
-            transition_action = transition_label.split(':')[0]
-            transition_freq = np.log(float(transition_label.split(':')[1])) if float(transition_label.split(':')[1]) > 0 else -10000
-            transition_mapping[(state_mapping[source_state], state_mapping[target_state])] = (transition_action, transition_freq)
+    #     transition_mapping = {}
+    #     for transition in automaton_transitions:
+    #         transition_split = transition.split('->')
+    #         source_state = transition_split[0].strip()
+    #         target_state = transition_split[1].strip().split(' ')[0]
+    #         transition_label = transition_split[1].split('[label="')[1].split('"];')[0]
+    #         transition_action = transition_label.split(':')[0]
+    #         transition_freq = np.log(float(transition_label.split(':')[1])) if float(transition_label.split(':')[1]) > 0 else -10000
+    #         transition_mapping[(state_mapping[source_state], state_mapping[target_state])] = (transition_action, transition_freq)
 
-        # from s0 to s31, if some pair of states are not in the transition_mapping, then the frequency is 0
-        for i in range(14):
-            for j in range(14):
-                if (state_mapping[f's{i}'], state_mapping[f's{j}']) not in transition_mapping:
-                    transition_mapping[(state_mapping[f's{i}'], state_mapping[f's{j}'])] = ('unknown', -10000)
+    #     # from s0 to s31, if some pair of states are not in the transition_mapping, then the frequency is 0
+    #     for i in range(14):
+    #         for j in range(14):
+    #             if (state_mapping[f's{i}'], state_mapping[f's{j}']) not in transition_mapping:
+    #                 transition_mapping[(state_mapping[f's{i}'], state_mapping[f's{j}'])] = ('unknown', -10000)
 
-        transition_mapping_flow[flow_name] = transition_mapping
+    #     transition_mapping_flow[flow_name] = transition_mapping
 
     # group predictions every 4
     new_predictions = []
@@ -2225,8 +2225,8 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
                 if current_flow not in all_flow_name:
                     rate = transition_mapping_global[(action_mapping_reverse[previous_actions[-1]], action_mapping_reverse[actions[i]])][1]
                 else:
-                    rate = transition_mapping_flow[current_flow][(action_mapping_reverse[previous_actions[-1]], action_mapping_reverse[actions[i]])][1]
-                    # rate = transition_mapping_global[(action_mapping_reverse[previous_actions[-1]], action_mapping_reverse[actions[i]])][1]
+                    # rate = transition_mapping_flow[current_flow][(action_mapping_reverse[previous_actions[-1]], action_mapping_reverse[actions[i]])][1]
+                    rate = transition_mapping_global[(action_mapping_reverse[previous_actions[-1]], action_mapping_reverse[actions[i]])][1]
             except:
                 # print("current flow: ", current_flow)
                 # print((previous_actions[-1], actions[i]))
@@ -2424,7 +2424,7 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_joint)):
             average_for_dialogue += snipet_correct_joint[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -2457,7 +2457,7 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_action)):
             average_for_dialogue += snipet_correct_action[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
@@ -2490,7 +2490,7 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         average_for_dialogue = 0
         for snipet_i in range(len(snipet_lens_value)):
             average_for_dialogue += snipet_correct_value[snipet_i]
-        average_for_dialogue = average_for_dialogue / len(snipet_lens)
+        average_for_dialogue = average_for_dialogue / min(len(snipet_lens), len(convo_correctness_action))
         # average_for_dialogue = average_for_dialogue / average_counter
         # print(f"average_for_dialogue: {average_for_dialogue}")
 
