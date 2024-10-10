@@ -1,5 +1,5 @@
 # set cuda device
-export CUDA_VISIBLE_DEVICES=6,7
+export CUDA_VISIBLE_DEVICES=0,1
 echo "multiwozASTWOActionNameFlow10P"
 python train.py --experiment_name multiwozASTWOActionNameFlow10P \
  --model_name_or_path results/multiwozASTWOActionNameFlow10P_input_target_t5-small \
@@ -9,8 +9,8 @@ python train.py --experiment_name multiwozASTWOActionNameFlow10P \
   --test_file ./data/processed/test_AST_multiwoz_woaction_name_flow_10p.json \
   --text_column input \
   --summary_column target \
-  --per_device_train_batch_size 64 \
-  --per_device_eval_batch_size 64 \
+  --per_device_train_batch_size 32 \
+  --per_device_eval_batch_size 32 \
   --predict_with_generate \
   --output_dir ./results/ \
   --save_strategy epoch \
@@ -26,7 +26,7 @@ python train.py --experiment_name multiwozASTWOActionNameFlow10P \
 
 
 
-export CUDA_VISIBLE_DEVICES=6,7
+export CUDA_VISIBLE_DEVICES=0,1
 echo "multiwozASTWOActionNameFlow30P"
 python train.py --experiment_name multiwozASTWOActionNameFlow30P \
  --model_name_or_path results/multiwozASTWOActionNameFlow30P_input_target_t5-small \
@@ -36,8 +36,8 @@ python train.py --experiment_name multiwozASTWOActionNameFlow30P \
   --test_file ./data/processed/test_AST_multiwoz_woaction_name_flow_30p.json \
   --text_column input \
   --summary_column target \
-  --per_device_train_batch_size 64 \
-  --per_device_eval_batch_size 64 \
+  --per_device_train_batch_size 32 \
+  --per_device_eval_batch_size 32 \
   --predict_with_generate \
   --output_dir ./results/ \
   --save_strategy epoch \
@@ -52,7 +52,7 @@ python train.py --experiment_name multiwozASTWOActionNameFlow30P \
   --num_beams 4
 
 
-export CUDA_VISIBLE_DEVICES=6,7
+export CUDA_VISIBLE_DEVICES=0,1
 echo "multiwozASTWOActionNameFlowHalf"
 python train.py --experiment_name multiwozASTWOActionNameFlowHalf \
  --model_name_or_path results/multiwozASTWOActionNameFlowHalf_input_target_t5-small \
@@ -62,8 +62,8 @@ python train.py --experiment_name multiwozASTWOActionNameFlowHalf \
   --test_file ./data/processed/test_AST_multiwoz_woaction_name_flow_half.json \
   --text_column input \
   --summary_column target \
-  --per_device_train_batch_size 64 \
-  --per_device_eval_batch_size 64 \
+  --per_device_train_batch_size 32 \
+  --per_device_eval_batch_size 32 \
   --predict_with_generate \
   --output_dir ./results/ \
   --save_strategy epoch \
@@ -78,7 +78,7 @@ python train.py --experiment_name multiwozASTWOActionNameFlowHalf \
   --num_beams 4
 
 
-export CUDA_VISIBLE_DEVICES=6,7
+export CUDA_VISIBLE_DEVICES=0,1
 echo "multiwozASTWOActionNameFlowAll"
 python train.py --experiment_name multiwozASTWOActionNameFlowAll \
  --model_name_or_path results/multiwozASTWOActionNameFlowAll_input_target_t5-small \
@@ -88,8 +88,8 @@ python train.py --experiment_name multiwozASTWOActionNameFlowAll \
   --test_file ./data/processed/test_AST_multiwoz_woaction_name_flow_all.json \
   --text_column input \
   --summary_column target \
-  --per_device_train_batch_size 64 \
-  --per_device_eval_batch_size 64 \
+  --per_device_train_batch_size 32 \
+  --per_device_eval_batch_size 32 \
   --predict_with_generate \
   --output_dir ./results/ \
   --save_strategy epoch \

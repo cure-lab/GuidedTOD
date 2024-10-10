@@ -2859,6 +2859,9 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         log_norm_exp_rates = [np.log(rate) for rate in norm_exp_rates]
 
         merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
+        # merge_scores = 0.6*np.array(log_norm_exp_new_sequence_score) + 0.4*np.array(log_norm_exp_rates)
+        # merge_scores = 0.8 * np.array(log_norm_exp_new_sequence_score) + 0.2 * np.array(log_norm_exp_rates)
+        # merge_scores = 0.98 * np.array(log_norm_exp_new_sequence_score) + 0.02 * np.array(log_norm_exp_rates)
         # merge_scores = log_norm_exp_new_sequence_score
         # merge_scores = rates
 
@@ -3001,11 +3004,16 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         convo_correctness_value = itm[2]
 
         # print(f"convo_id: {convo_id}, convo_correctness: {convo_correctness}")
-        tmp_counter = 0
-        for step_idx in range(len(convo_correctness)):
-            if convo_correctness[step_idx]:
-                tmp_counter += 1
-        dialogue_step_successes.append(tmp_counter/len(convo_correctness))
+        def count_successive_ones(lst):
+            count = 0
+            for num in lst:
+                if num:
+                    count += 1
+                else:
+                    break
+            return count
+        successive_steps = count_successive_ones(convo_correctness)
+        dialogue_step_successes.append(successive_steps/len(convo_correctness))
 
         # calculate EM
         if sum(convo_correctness) == len(convo_correctness):
@@ -3027,7 +3035,7 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         # we use turn_id rather than the true turn_count since turn counts will skip numbers
         # when looping through the conversation due to skipping over customer utterances
 
-        snipet_lens = [1,2,3]
+        snipet_lens = [4]
 
         # for joint correctness
         snipet_lens_joint  = snipet_lens

@@ -1484,11 +1484,16 @@ def compute_ast_acc_metrics_abcd_dialogueLevel(predictions, labels, convo_ids, t
         convo_correctness_action = itm[1]
         convo_correctness_value = itm[2]
 
-        tmp_counter = 0
-        for step_idx in range(len(convo_correctness)):
-            if convo_correctness[step_idx]:
-                tmp_counter += 1
-        dialogue_step_successes.append(tmp_counter/len(convo_correctness))
+        def count_successive_ones(lst):
+            count = 0
+            for num in lst:
+                if num:
+                    count += 1
+                else:
+                    break
+            return count
+        successive_steps = count_successive_ones(convo_correctness)
+        dialogue_step_successes.append(successive_steps/len(convo_correctness))
 
         # calculate EM
         if sum(convo_correctness) == len(convo_correctness):
@@ -2637,11 +2642,16 @@ def compute_ast_acc_metrics_multiwoz_dialogueLevel(predictions, labels, convo_id
         convo_correctness_action = itm[1]
         convo_correctness_value = itm[2]
 
-        tmp_counter = 0
-        for step_idx in range(len(convo_correctness)):
-            if convo_correctness[step_idx]:
-                tmp_counter += 1
-        dialogue_step_successes.append(tmp_counter/len(convo_correctness))
+        def count_successive_ones(lst):
+            count = 0
+            for num in lst:
+                if num:
+                    count += 1
+                else:
+                    break
+            return count
+        successive_steps = count_successive_ones(convo_correctness)
+        dialogue_step_successes.append(successive_steps/len(convo_correctness))
 
         # calculate EM
         if sum(convo_correctness) == len(convo_correctness):

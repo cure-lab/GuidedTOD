@@ -2247,8 +2247,8 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         log_norm_exp_new_sequence_score = [np.log(score) for score in norm_exp_new_sequence_score]
         log_norm_exp_rates = [np.log(rate) for rate in norm_exp_rates]
 
-        merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
-        # merge_scores = log_norm_exp_new_sequence_score
+        # merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
+        merge_scores = log_norm_exp_new_sequence_score
         # merge_scores = rates
 
         max_index = np.argmax(merge_scores)
@@ -2371,11 +2371,16 @@ def compute_ast_acc_metrics_flow_dialogueLevel(predictions, labels, convo_ids, t
         convo_correctness_action = itm[1]
         convo_correctness_value = itm[2]
 
-        tmp_counter = 0
-        for step_idx in range(len(convo_correctness)):
-            if convo_correctness[step_idx]:
-                tmp_counter += 1
-        dialogue_step_successes.append(tmp_counter/len(convo_correctness))
+        def count_successive_ones(lst):
+            count = 0
+            for num in lst:
+                if num:
+                    count += 1
+                else:
+                    break
+            return count
+        successive_steps = count_successive_ones(convo_correctness)
+        dialogue_step_successes.append(successive_steps/len(convo_correctness))
 
         # calculate EM
         if sum(convo_correctness) == len(convo_correctness):

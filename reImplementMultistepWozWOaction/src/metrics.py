@@ -1331,11 +1331,16 @@ def compute_ast_acc_metrics_noBeam_dialogueLevel(predictions, labels, convo_ids,
         convo_correctness_action = itm[1]
         convo_correctness_value = itm[2]
 
-        tmp_counter = 0
-        for step_idx in range(len(convo_correctness)):
-            if convo_correctness[step_idx]:
-                tmp_counter += 1
-        dialogue_step_successes.append(tmp_counter/len(convo_correctness))
+        def count_successive_ones(lst):
+            count = 0
+            for num in lst:
+                if num:
+                    count += 1
+                else:
+                    break
+            return count
+        successive_steps = count_successive_ones(convo_correctness)
+        dialogue_step_successes.append(successive_steps/len(convo_correctness))
 
         if len(convo_correctness_action) not in counter_length:
             counter_length[len(convo_correctness_action)] = 1
@@ -2071,6 +2076,7 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
     }
 
     action_mapping_reverse = {v: k for k, v in action_mapping.items()}
+    # print(action_mapping_reverse)
 
     # load an automaton
     automaton = load_automaton_from_file("./chainPrior/learned_mdp_multiwoz_all.dot", automaton_type='mdp')
@@ -2148,6 +2154,7 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
                 # rate = transition_mapping_global[(previous_actions[-1], actions[i])][1]
                 rate = transition_mapping_global[(action_mapping_reverse[previous_actions[-1]], action_mapping_reverse[actions[i]])][1]
             except:
+                print("An error occurred while accessing the transition mapping.")
                 rate = -10000
             rates.append(rate)
 
@@ -2161,7 +2168,9 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         log_norm_exp_new_sequence_score = [np.log(score) for score in norm_exp_new_sequence_score]
         log_norm_exp_rates = [np.log(rate) for rate in norm_exp_rates]
 
-        merge_scores = 0.9*np.array(log_norm_exp_new_sequence_score) + 0.1*np.array(log_norm_exp_rates)
+        # merge_scores = 0.95*np.array(log_norm_exp_new_sequence_score) + 0.05*np.array(log_norm_exp_rates)
+        merge_scores = 0.98*np.array(log_norm_exp_new_sequence_score) + 0.02*np.array(log_norm_exp_rates)
+        # merge_scores = 0.8*np.array(log_norm_exp_new_sequence_score) + 0.2*np.array(log_norm_exp_rates)
         # merge_scores = log_norm_exp_new_sequence_score
         # merge_scores = rates
 
@@ -2170,7 +2179,7 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
 
         action_value_label = label1.split(';')[0].strip()
         action_label = action_value_label.split(' [')[0].strip()
-        action_label = action_mapping_reverse[action_label]
+        # action_label = action_mapping_reverse[action_label]
         previous_actions.append(action_label)
 
     """Adapted from ABCD. """
@@ -2186,10 +2195,10 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
     # print("len(labels): ", len(labels))
     for pred, label in zip(new_new_predictions, labels):
     # for pred, label in zip(predictions, labels):
-        pred = pred.split(";")[0]
-        label = label.split(";")[0]
+        tmp_pred = pred.split(";")[0]
+        tmp_label = label.split(";")[0]
         # print(f"pred: {pred}, label: {label}")
-        action_label, values_label = parse_ast_prediction(label)
+        action_label, values_label = parse_ast_prediction(tmp_label)
         values_label.sort()
         # for value in values_label:
         #     action_labels.append(action_label)
@@ -2197,7 +2206,7 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         action_labels.append(action_label)
         value_labels.append(values_label)
 
-        action_pred, values_pred = parse_ast_prediction(pred)
+        action_pred, values_pred = parse_ast_prediction(tmp_pred)
         values_pred.sort()
 
         if len(values_pred) > len(values_label):
@@ -2296,11 +2305,16 @@ def compute_ast_acc_metrics_beam_wMultiChain(predictions, labels, convo_ids, tur
         convo_correctness_action = itm[1]
         convo_correctness_value = itm[2]
 
-        tmp_counter = 0
-        for step_idx in range(len(convo_correctness)):
-            if convo_correctness[step_idx]:
-                tmp_counter += 1
-        dialogue_step_successes.append(tmp_counter/len(convo_correctness))
+        def count_successive_ones(lst):
+            count = 0
+            for num in lst:
+                if num:
+                    count += 1
+                else:
+                    break
+            return count
+        successive_steps = count_successive_ones(convo_correctness)
+        dialogue_step_successes.append(successive_steps/len(convo_correctness))
 
         # calculate EM
         if sum(convo_correctness) == len(convo_correctness):

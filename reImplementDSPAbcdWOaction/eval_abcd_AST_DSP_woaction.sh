@@ -25,7 +25,7 @@ python train.py --experiment_name abcdASTWOActionAll \
   --num_beams 4
 
 
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=0,1
 echo "abcdASTWOActionHalf"
 python train.py --experiment_name abcdASTWOActionHalf \
  --model_name_or_path results/abcdASTWOActionHalf_input_target_t5-small \
@@ -76,7 +76,7 @@ python train.py --experiment_name abcdASTWOAction30P \
   --use_ast_metrics \
   --num_beams 4
 
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=0,1
 echo "abcdASTWOAction10P"
 python train.py --experiment_name abcdASTWOAction10P \
  --model_name_or_path results/abcdASTWOAction10P_input_target_t5-small \
