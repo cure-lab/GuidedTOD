@@ -1,3 +1,7 @@
+## News:
+
+Our paper is accepted by NAACL 2025!
+
 ## This is the official implementation of "GuidedTOD"
 
 <!-- paper -->
